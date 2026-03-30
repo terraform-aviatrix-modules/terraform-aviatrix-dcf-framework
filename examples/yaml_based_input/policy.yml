@@ -1,0 +1,201 @@
+---
+# DCF Policy - YAML format
+# All Smart Groups and Web Groups are created first (Terraform dependency graph
+# ensures this via explicit depends_on in the module). Rules reference groups
+# by the same key used here; unrecognised keys are treated as raw UUIDs so
+# pre-existing groups created outside this module can be referenced too.
+
+smart_groups:
+
+  # --- CIDR-based groups ---
+  rfc1918:
+    selector:
+      - cidr: "10.0.0.0/8"
+      - cidr: "172.16.0.0/12"
+      - cidr: "192.168.0.0/16"
+
+  internet:
+    selector:
+      - cidr: "0.0.0.0/0"
+
+  # --- Tag-based VM groups ---
+  app-servers:
+    selector:
+      - type: vm
+        account_name: my-aws-account
+        region: us-east-1
+        tags:
+          role: app
+          env: prod
+
+  db-servers:
+    selector:
+      - type: vm
+        account_name: my-aws-account
+        region: us-east-1
+        tags:
+          role: db
+          env: prod
+
+  # --- VPC-level group ---
+  prod-vpc:
+    selector:
+      - type: vpc
+        account_name: my-aws-account
+        region: us-east-1
+        name: prod-vpc
+
+  # --- Kubernetes workload group ---
+  k8s-frontend:
+    selector:
+      - type: k8s
+        k8s_cluster_id: cluster-abc123
+        k8s_namespace: frontend
+
+  # --- Threat intelligence feed ---
+  threat-feeds:
+    selector:
+      - external: threatiq
+      - external: geo
+        ext_args:
+          country_iso_code: CN
+      - external: geo
+        ext_args:
+          country_iso_code: RU
+
+web_groups:
+
+  # SNI-based allow-list for outbound HTTPS
+  allowed-saas:
+    selector:
+      - snifilter: "*.salesforce.com"
+      - snifilter: "*.office365.com"
+      - snifilter: "*.okta.com"
+      - snifilter: "*.github.com"
+
+  # URL-based allow-list for package downloads
+  allowed-downloads:
+    selector:
+      - urlfilter: "https://registry.npmjs.org/*"
+      - urlfilter: "https://pypi.org/packages/*"
+      - urlfilter: "https://dl.google.com/linux/*"
+
+rulesets:
+
+  prod-policy:
+    rules:
+
+      # 1. Block known threats inbound and outbound (highest priority)
+      - name: block-threat-intel
+        action: DENY
+        protocol: ANY
+        priority: 10
+        src_smart_groups:
+          - threat-feeds
+        dst_smart_groups:
+          - rfc1918
+        logging: true
+
+      - name: block-to-threat-intel
+        action: DENY
+        protocol: ANY
+        priority: 11
+        src_smart_groups:
+          - rfc1918
+        dst_smart_groups:
+          - threat-feeds
+        logging: true
+
+      # 2. App servers -> allowed SaaS over HTTPS with deep inspection
+      - name: app-to-saas-https
+        action: DEEP_PACKET_INSPECTION_PERMIT
+        protocol: TCP
+        priority: 100
+        src_smart_groups:
+          - app-servers
+        dst_smart_groups:
+          - internet
+        web_groups:
+          - allowed-saas
+        port_ranges:
+          - lo: 443
+            hi: 443
+        flow_app_requirement: TLS_REQUIRED
+        logging: true
+
+      # 3. App servers -> package download endpoints
+      - name: app-to-downloads
+        action: DEEP_PACKET_INSPECTION_PERMIT
+        protocol: TCP
+        priority: 110
+        src_smart_groups:
+          - app-servers
+        dst_smart_groups:
+          - internet
+        web_groups:
+          - allowed-downloads
+        port_ranges:
+          - lo: 443
+            hi: 443
+
+      # 4. App <-> DB lateral movement on well-known ports
+      - name: app-to-db-mysql
+        action: PERMIT
+        protocol: TCP
+        priority: 200
+        src_smart_groups:
+          - app-servers
+        dst_smart_groups:
+          - db-servers
+        port_ranges:
+          - lo: 3306
+            hi: 3306
+
+      - name: app-to-db-postgres
+        action: PERMIT
+        protocol: TCP
+        priority: 201
+        src_smart_groups:
+          - app-servers
+        dst_smart_groups:
+          - db-servers
+        port_ranges:
+          - lo: 5432
+            hi: 5432
+
+      # 5. Kubernetes frontend -> app servers
+      - name: k8s-frontend-to-app
+        action: PERMIT
+        protocol: TCP
+        priority: 300
+        src_smart_groups:
+          - k8s-frontend
+        dst_smart_groups:
+          - app-servers
+        port_ranges:
+          - lo: 8080
+            hi: 8080
+          - lo: 8443
+            hi: 8443
+
+      # 6. ICMP permit within internal networks (no port_ranges for ICMP)
+      - name: permit-icmp-internal
+        action: PERMIT
+        protocol: ICMP
+        priority: 400
+        src_smart_groups:
+          - rfc1918
+        dst_smart_groups:
+          - rfc1918
+
+      # 7. Deny-all default (lowest priority, logged for visibility)
+      - name: deny-all
+        action: DENY
+        protocol: ANY
+        priority: 65000
+        src_smart_groups:
+          - internet
+        dst_smart_groups:
+          - rfc1918
+        logging: true
+        watch: false
