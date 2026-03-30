@@ -11,7 +11,7 @@ resource "aviatrix_smart_group" "smart_groups" {
         fqdn           = match_expressions.value.fqdn
         site           = match_expressions.value.site
         type           = match_expressions.value.type
-        resource_id    = match_expressions.value.resource_id
+        res_id         = match_expressions.value.res_id
         account_id     = match_expressions.value.account_id
         account_name   = match_expressions.value.account_name
         name           = match_expressions.value.name
@@ -20,7 +20,7 @@ resource "aviatrix_smart_group" "smart_groups" {
         k8s_cluster_id = match_expressions.value.k8s_cluster_id
         k8s_namespace  = match_expressions.value.k8s_namespace
         k8s_service    = match_expressions.value.k8s_service
-        k8s_pod_name   = match_expressions.value.k8s_pod_name
+        k8s_pod        = match_expressions.value.k8s_pod
         s2c            = match_expressions.value.s2c
         external       = match_expressions.value.external
         tags           = match_expressions.value.tags
