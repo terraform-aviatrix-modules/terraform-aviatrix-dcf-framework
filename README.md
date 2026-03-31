@@ -1,101 +1,213 @@
-# terraform-aviatrix-module-template
-
-This repository provides standardized instructions and conventions for creating Aviatrix modules.
-
-#### Instructions
-1. Create a new repository from this template, by clicking the green "Use this template" button. Make sure to use the [module naming convention](#module-naming-convention)
-2. Clone the repository to your system with ```git clone <repository>```
-5. Edit the repository and commit and update the new repository:
-    - Commit changes: ```git commit -am "Description of changes"```
-    - Push to repository: ```git push origin master```
-6. Update the readme.md file
-    - Remove all content above [the line](#delete-everything-above-and-including-this-line).
-    - Fill out the rest of file based on the provided template.
-7. When ready for release, create a [tag](#tagging).
-
-#### Conventions
-
-###### Repositories
-- For each module, a new reposity shall be created. This is for the purpose of:
-    - Version control per module
-    - Issue handling/feature requests per module
-    - Easier consumption of the module in projects and publication in registers like Terraform Cloud
-
-###### Module Naming convention
-We will use the following convention for naming repositories:
-
-**terraform-aviatrix-\<cloudname or mc for multi-cloud>-\<function>**
-
-Function can be a single word, or more if required to accurately describe the module function. These should be seperated by hyphens. Example:
-
-**terraform-aviatrix-aws-transit-firenet**
-
-###### Resource Naming convention
-```A naming convention for objects created through our modules needs to be decided upon and inserted here.```
-
-###### Tagging
-In order to use modules, it is best practice to tag versions when they are ready for consumption. The format to be used for this is "vx.x.x" e.g. v0.0.1. This can be done on Github by clicking "Create a new release". It is also possible to do this from your system. Make sure you committed your changes to the master branch. After that, create a new tag with ```git tag vx.x.x``` and push the tagged version to the tagged branch with ```git push origin vx.x.x```.
-
-As soon as a module is ready for publishing publicly, the tag release should move up to the first major release. A tag v1.0.0 should be created and the repository can now be altered from a private to a public.
-
-###### Module layout
-The repository contains the default file layout that is recommended to use.
-file | use
-:---|:---
-main.tf | This should contain the resources to be created
-variables.tf | This should contain all expected input variables
-output.tf | This should contain all output objects
-
-Diagram images used in the readme.md should be stored on a publicly available environment. E.g. a public s3 bucket. The reason for that is, when publishing these modules at some point (e.g. Terraform Registry), the image source should always be publicly accessible, even though the repository itself might not be.
-
-
-#### Delete everything above and including this line
-***
-
-# Repository Name
+# terraform-aviatrix-dcf-framework
 
 ### Description
-\<Provide a description of the module>
+This module manages Aviatrix [Distributed Cloud Firewall (DCF)](https://docs.aviatrix.com/documentation/latest/security/distributed-cloud-firewall.html) Smart Groups, Web Groups, and Rulesets from a single structured data input. Policy can be supplied as a native Terraform map or loaded from an external [YAML](examples/yaml_based_input) or [JSON](examples/json_based_input) file, allowing firewall policy to be managed as code without embedding resource definitions directly in HCL.
 
-### Diagram
-\<Provide a diagram of the high level constructs thet will be created by this module>
-<img src="<IMG URL>"  height="250">
+The module resolves Smart Group and Web Group map keys to their computed UUIDs before attaching them to rules, and looks up DCF attachment point IDs automatically from the `attach_to` name supplied per ruleset.
 
 ### Compatibility
 Module version | Terraform version | Controller version | Terraform provider version
 :--- | :--- | :--- | :---
-v1.0.2 | 0.12 | 6.1 | 0.2.16
-v1.0.1 | | |
-v1.0.0 | | |
+v1.0.0 | >= 1.3.0 | >= 7.1 | >= 3.1.0
+
+Check [release notes](RELEASE_NOTES.md) for more details.
+Check [compatibility list](COMPATIBILITY.md) for older versions.
 
 ### Usage Example
+
+Policy is maintained in a separate YAML file and decoded at plan time. A JSON equivalent is also supported — see the [json_based_input](examples/json_based_input) example.
+
+**main.tf**
 ```hcl
-module "transit_aws_1" {
-  source  = "terraform-aviatrix-modules/aws-transit/aviatrix"
+resource "aviatrix_distributed_firewalling_config" "this" {
+  enable_distributed_firewalling = true
+}
+
+locals {
+  policy = yamldecode(file("${path.module}/policy.yml"))
+}
+
+module "dcf" {
+  source  = "terraform-aviatrix-modules/dcf-framework/aviatrix"
   version = "1.0.0"
 
-  cidr = "10.1.0.0/20"
-  region = "eu-west-1"
-  aws_account_name = "AWS"
+  smart_groups = try(local.policy.smart_groups, {})
+  web_groups   = try(local.policy.web_groups, {})
+  rulesets     = try(local.policy.rulesets, {})
 }
 ```
 
-### Variables
-The following variables are required:
+**policy.yml**
+```yaml
+---
+smart_groups:
 
-key | value
-:--- | :---
-\<keyname> | \<description of value that should be provided in this variable>
+  # --- CIDR-based groups ---
+  rfc1918:
+    selector:
+      - cidr: "10.0.0.0/8"
+      - cidr: "172.16.0.0/12"
+      - cidr: "192.168.0.0/16"
+
+  internet:
+    selector:
+      - cidr: "0.0.0.0/0"
+
+  # --- Tag-based VM groups ---
+  app-servers:
+    selector:
+      - type: vm
+        account_name: my-aws-account
+        region: us-east-1
+        tags:
+          role: app
+          env: prod
+
+  db-servers:
+    selector:
+      - type: vm
+        account_name: my-aws-account
+        region: us-east-1
+        tags:
+          role: db
+          env: prod
+
+  # --- Threat intelligence feed ---
+  threat-feeds:
+    selector:
+      - external: threatiq
+      - external: geo
+        ext_args:
+          country_iso_code: CN
+
+web_groups:
+
+  # SNI-based allow-list for outbound HTTPS
+  allowed-saas:
+    selector:
+      - snifilter: "*.salesforce.com"
+      - snifilter: "*.okta.com"
+
+  # URL-based allow-list for package downloads
+  allowed-downloads:
+    selector:
+      - urlfilter: "registry.npmjs.org/*"
+      - urlfilter: "pypi.org/packages/*"
+
+rulesets:
+
+  prod-policy:
+    attach_to: "TERRAFORM_BEFORE_UI_MANAGED"
+    rules:
+
+      - name: block-threat-intel
+        action: DENY
+        protocol: ANY
+        priority: 10
+        src_smart_groups:
+          - threat-feeds
+        dst_smart_groups:
+          - rfc1918
+        logging: true
+
+      - name: app-to-saas-https
+        action: DEEP_PACKET_INSPECTION_PERMIT
+        protocol: TCP
+        priority: 100
+        src_smart_groups:
+          - app-servers
+        dst_smart_groups:
+          - internet
+        web_groups:
+          - allowed-saas
+        port_ranges:
+          - lo: 443
+            hi: 443
+        flow_app_requirement: TLS_REQUIRED
+        logging: true
+
+      - name: deny-all
+        action: DENY
+        protocol: ANY
+        priority: 65000
+        src_smart_groups:
+          - internet
+        dst_smart_groups:
+          - rfc1918
+        logging: true
+```
+
+### Variables
+There are no required variables. All inputs default to an empty map, producing no resources unless values are provided.
 
 The following variables are optional:
 
-key | default | value 
+key | default | value
 :---|:---|:---
-\<keyname> | \<default value> | \<description of value that should be provided in this variable>
+smart_groups | `{}` | Map of Smart Groups to create. The map key is used as the Terraform resource label and default name. See [Smart Group selector arguments](#smart-group-selector-arguments).
+web_groups | `{}` | Map of Web Groups to create. The map key is used as the Terraform resource label and default name. See [Web Group selector arguments](#web-group-selector-arguments).
+rulesets | `{}` | Map of DCF Rulesets to create. The map key is used as the Terraform resource label and default name. Smart Group and Web Group references in rules are resolved by map key; unresolved values are treated as raw UUIDs. See [Ruleset arguments](#ruleset-arguments).
+
+### Smart Group selector arguments
+key | required | value
+:---|:---|:---
+cidr | No | CIDR block to match
+fqdn | No | FQDN to match
+site | No | Site name to match
+type | No | Resource type (`vm`, `vpc`, `k8s`)
+res_id | No | Resource ID
+account_id | No | Account ID
+account_name | No | Access account name
+name | No | Resource name
+region | No | Cloud region
+zone | No | Availability zone
+k8s_cluster_id | No | Kubernetes cluster ID
+k8s_namespace | No | Kubernetes namespace
+k8s_service | No | Kubernetes service
+k8s_pod | No | Kubernetes pod
+s2c | No | Site2Cloud connection name
+external | No | External threat feed (`threatiq`, `geo`)
+tags | No | Map of key/value tags to match
+ext_args | No | Map of extra arguments for external feeds (e.g. `country_iso_code`)
+
+### Web Group selector arguments
+key | required | value
+:---|:---|:---
+snifilter | No | SNI hostname pattern (e.g. `*.example.com`)
+urlfilter | No | URL pattern without `http://` or `https://` prefix (e.g. `registry.npmjs.org/*`)
+
+### Ruleset arguments
+key | required | value
+:---|:---|:---
+name | No | Override the ruleset name (defaults to the map key)
+attach_to | No | Name of the DCF attachment point (e.g. `TERRAFORM_BEFORE_UI_MANAGED`). The module resolves this to the attachment point ID automatically.
+rules | No | List of rule objects. See [Rule arguments](#rule-arguments).
+
+### Rule arguments
+key | required | value
+:---|:---|:---
+name | Yes | Rule name
+action | Yes | `PERMIT`, `DENY`, `DEEP_PACKET_INSPECTION_PERMIT`, or `INTRUSION_DETECTION_PERMIT`
+protocol | Yes | `TCP`, `UDP`, `ICMP`, or `ANY`
+src_smart_groups | Yes | List of Smart Group map keys or raw UUIDs for the source
+dst_smart_groups | Yes | List of Smart Group map keys or raw UUIDs for the destination
+priority | No | Rule priority (default: `0`)
+port_ranges | No | List of `{ lo, hi }` port range objects. Cannot be used with `ICMP`.
+web_groups | No | List of Web Group map keys or raw UUIDs
+flow_app_requirement | No | `APP_UNSPECIFIED`, `TLS_REQUIRED`, or `NOT_TLS_REQUIRED`
+decrypt_policy | No | `DECRYPT_UNSPECIFIED`, `DECRYPT_ALLOWED`, or `DECRYPT_NOT_ALLOWED`
+tls_profile | No | TLS profile UUID
+log_profile | No | Logging profile UUID
+exclude_sg_orchestration | No | Exclude this rule from SG orchestration (`true`/`false`, default: `false`)
+watch | No | Watch-only mode — observe without enforcing (`true`/`false`)
+logging | No | Enable logging for matching packets (`true`/`false`)
 
 ### Outputs
 This module will return the following outputs:
 
 key | description
 :---|:---
+smart_groups | Map of created Smart Groups keyed by input map key, each exposing `name` and `uuid`
+web_groups | Map of created Web Groups keyed by input map key, each exposing `name` and `uuid`
+rulesets | Map of created DCF Ruleset resources keyed by input map key
 \<keyname> | \<description of object that will be returned in this output>
