@@ -45,7 +45,7 @@ variable "rulesets" {
   default     = {}
   nullable    = false
   type = map(object({
-    name             = optional(string)
+    name      = optional(string)
     attach_to = optional(string)
     rules = optional(list(object({
       name             = string
