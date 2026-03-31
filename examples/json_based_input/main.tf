@@ -1,3 +1,8 @@
+# Create an Aviatrix Distributed Firewalling config
+resource "aviatrix_distributed_firewalling_config" "test" {
+  enable_distributed_firewalling = true
+}
+
 module "dcf" {
   source = "../.."
 

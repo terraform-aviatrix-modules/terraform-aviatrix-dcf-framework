@@ -82,9 +82,9 @@
     },
     "allowed-downloads": {
       "selector": [
-        { "urlfilter": "https://registry.npmjs.org/*" },
-        { "urlfilter": "https://pypi.org/packages/*" },
-        { "urlfilter": "https://dl.google.com/linux/*" }
+        { "urlfilter": "registry.npmjs.org/*" },
+        { "urlfilter": "pypi.org/packages/*" },
+        { "urlfilter": "dl.google.com/linux/*" }
       ]
     }
   },
