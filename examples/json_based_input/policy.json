@@ -90,6 +90,7 @@
   },
   "rulesets": {
     "prod-policy": {
+      "attach_to": "TERRAFORM_BEFORE_UI_MANAGED",
       "rules": [
         {
           "name": "block-threat-intel",

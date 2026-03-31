@@ -1,3 +1,11 @@
+data "aviatrix_dcf_attachment_point" "this" {
+  for_each = toset([
+    for k, v in var.rulesets : v.attach_to
+    if v.attach_to != null
+  ])
+  name = each.value
+}
+
 resource "aviatrix_smart_group" "smart_groups" {
   for_each = var.smart_groups
 
@@ -50,7 +58,7 @@ resource "aviatrix_dcf_ruleset" "rulesets" {
   for_each = var.rulesets
 
   name      = coalesce(each.value.name, each.key)
-  attach_to = each.value.attach_to
+  attach_to = each.value.attach_to != null ? data.aviatrix_dcf_attachment_point.this[each.value.attach_to].id : null
 
   dynamic "rules" {
     for_each = each.value.rules

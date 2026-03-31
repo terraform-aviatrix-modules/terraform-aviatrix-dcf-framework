@@ -83,6 +83,7 @@ web_groups:
 rulesets:
 
   prod-policy:
+    attach_to: "TERRAFORM_BEFORE_UI_MANAGED"
     rules:
 
       # 1. Block known threats inbound and outbound (highest priority)

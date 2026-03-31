@@ -4,7 +4,7 @@ resource "aviatrix_distributed_firewalling_config" "test" {
 }
 
 module "dcf" {
-  source = "../.."
+  source = "../.." 
 
   smart_groups = try(local.policy.smart_groups, {})
   web_groups   = try(local.policy.web_groups, {})
