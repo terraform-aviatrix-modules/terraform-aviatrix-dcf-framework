@@ -148,6 +148,33 @@ smart_groups | `{}` | Map of Smart Groups to create. The map key is used as the 
 web_groups | `{}` | Map of Web Groups to create. The map key is used as the Terraform resource label and default name. See [Web Group selector arguments](#web-group-selector-arguments).
 rulesets | `{}` | Map of DCF Rulesets to create. The map key is used as the Terraform resource label and default name. Smart Group and Web Group references in rules are resolved by map key; unresolved values are treated as raw UUIDs. See [Ruleset arguments](#ruleset-arguments).
 
+### Built-in Smart Groups
+
+The Aviatrix platform pre-defines the following Smart Groups. They cannot be managed or created via Terraform, but can be referenced by name in `src_smart_groups` and `dst_smart_groups` rule fields just like any customer-defined Smart Group — no entry in the `smart_groups` input is required.
+
+name | UUID | description
+:---|:---|:---
+`Any` | `def000ad-0000-0000-0000-000000000000` | Matches all traffic regardless of source or destination
+`Public Internet` | `def000ad-0000-0000-0000-000000000001` | Matches traffic to/from the public internet
+
+**Example** — reference a built-in group in a rule:
+
+```yaml
+rules:
+  - name: allow-https-outbound
+    action: PERMIT
+    protocol: TCP
+    priority: 100
+    src_smart_groups:
+      - Any
+    dst_smart_groups:
+      - Public Internet
+    port_ranges:
+      - lo: 443
+        hi: 443
+    logging: true
+```
+
 ### Smart Group selector arguments
 key | required | value
 :---|:---|:---
