@@ -154,7 +154,7 @@ The Aviatrix platform pre-defines the following Smart Groups. They cannot be man
 
 name | UUID | description
 :---|:---|:---
-`Any` | `def000ad-0000-0000-0000-000000000000` | Matches all traffic regardless of source or destination
+`Anywhere` | `def000ad-0000-0000-0000-000000000000` | Matches all traffic regardless of source or destination
 `Public Internet` | `def000ad-0000-0000-0000-000000000001` | Matches traffic to/from the public internet
 
 **Example** — reference a built-in group in a rule:
@@ -166,7 +166,7 @@ rules:
     protocol: TCP
     priority: 100
     src_smart_groups:
-      - Any
+      - Anywhere
     dst_smart_groups:
       - Public Internet
     port_ranges:
@@ -237,4 +237,3 @@ key | description
 smart_groups | Map of created Smart Groups keyed by input map key, each exposing `name` and `uuid`
 web_groups | Map of created Web Groups keyed by input map key, each exposing `name` and `uuid`
 rulesets | Map of created DCF Ruleset resources keyed by input map key
-\<keyname> | \<description of object that will be returned in this output>

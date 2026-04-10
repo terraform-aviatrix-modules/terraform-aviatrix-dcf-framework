@@ -3,7 +3,7 @@ locals {
   # and therefore cannot be managed via aviatrix_smart_group resources.
   # Customers can reference these by name in their rule configurations.
   builtin_smart_groups = {
-    "Any"             = "def000ad-0000-0000-0000-000000000000"
+    "Anywhere"        = "def000ad-0000-0000-0000-000000000000"
     "Public Internet" = "def000ad-0000-0000-0000-000000000001"
   }
 
