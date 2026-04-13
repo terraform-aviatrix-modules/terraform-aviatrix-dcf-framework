@@ -1,0 +1,9 @@
+{
+  "smart_groups": {
+    "internet": {
+      "selector": [
+        {"cidr": "0.0.0.0/0"}
+      ]
+    }
+  }
+}

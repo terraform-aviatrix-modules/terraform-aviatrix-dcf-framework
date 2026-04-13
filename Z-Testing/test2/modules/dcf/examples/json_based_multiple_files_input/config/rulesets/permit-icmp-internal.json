@@ -1,0 +1,11 @@
+{"rules": [
+{
+    "name": "permit-icmp-internal",
+    "action": "PERMIT",
+    "protocol": "ICMP",
+    "priority": 400,
+    "src_smart_groups": ["rfc1918"],
+    "dst_smart_groups": ["rfc1918"]
+}
+]
+}

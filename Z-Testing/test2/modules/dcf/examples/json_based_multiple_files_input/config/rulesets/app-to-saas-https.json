@@ -1,0 +1,15 @@
+{"rules": [
+{
+    "name": "app-to-saas-https",
+    "action": "DEEP_PACKET_INSPECTION_PERMIT",
+    "protocol": "TCP",
+    "priority": 100,
+    "src_smart_groups": ["app-servers"],
+    "dst_smart_groups": ["internet"],
+    "web_groups": ["allowed-saas"],
+    "port_ranges": [{"lo": 443, "hi": 443}],
+    "flow_app_requirement": "TLS_REQUIRED",
+    "logging": true
+}
+]
+}

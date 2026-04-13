@@ -1,0 +1,14 @@
+{
+  "smart_groups": {
+    "prod-vpc": {
+      "selector": [
+        {
+          "type": "vpc",
+          "account_name": "my-aws-account",
+          "region": "us-east-1",
+          "name": "prod-vpc"
+        }
+      ]
+    }
+  }
+}

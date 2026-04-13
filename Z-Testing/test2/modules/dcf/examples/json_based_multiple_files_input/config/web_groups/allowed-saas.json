@@ -1,0 +1,12 @@
+{
+  "web_groups": {
+    "allowed-saas": {
+      "selector": [
+        {"snifilter": "*.salesforce.com"},
+        {"snifilter": "*.office365.com"},
+        {"snifilter": "*.okta.com"},
+        {"snifilter": "*.github.com"}
+      ]
+    }
+  }
+}
