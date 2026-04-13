@@ -33,10 +33,10 @@ locals {
 
 module "dcf" {
   source = "../.."
-  
+
   smart_groups = try(local.policy.smart_groups, {})
   web_groups   = try(local.policy.web_groups, {})
   rulesets     = try(local.policy.rulesets, {})
 
-  depends_on = [ aviatrix_distributed_firewalling_config.this ]
+  depends_on = [aviatrix_distributed_firewalling_config.this]
 }
