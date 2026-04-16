@@ -137,6 +137,8 @@ rulesets:
         logging: true
 ```
 
+Configurations can also be split into individual YAML or JSON files to simplify automation. For examples, please see [yaml_based_multi_files_input](examples/yaml_based_multi_files_input) [json_based_multi_files_input](examples/json_based_multi_files_input)   
+
 ### Variables
 There are no required variables. All inputs default to an empty map, producing no resources unless values are provided.
 

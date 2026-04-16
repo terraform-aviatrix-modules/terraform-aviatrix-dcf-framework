@@ -1,0 +1,17 @@
+{
+  "smart_groups": {
+    "db-servers": {
+      "selector": [
+        {
+          "type": "vm",
+          "account_name": "my-aws-account",
+          "region": "us-east-1",
+          "tags": {
+            "role": "db",
+            "env": "prod"
+          }
+        }
+      ]
+    }
+  }
+}

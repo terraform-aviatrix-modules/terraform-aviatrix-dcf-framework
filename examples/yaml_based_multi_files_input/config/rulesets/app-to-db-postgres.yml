@@ -1,0 +1,12 @@
+rules:
+  - name: app-to-db-postgres
+    action: PERMIT
+    protocol: TCP
+    priority: 201
+    src_smart_groups:
+      - app-servers
+    dst_smart_groups:
+      - db-servers
+    port_ranges:
+      - lo: 5432
+        hi: 5432

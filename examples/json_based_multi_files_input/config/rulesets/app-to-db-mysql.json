@@ -1,0 +1,12 @@
+{"rules": [
+{
+    "name": "app-to-db-mysql",
+    "action": "PERMIT",
+    "protocol": "TCP",
+    "priority": 200,
+    "src_smart_groups": ["app-servers"],
+    "dst_smart_groups": ["db-servers"],
+    "port_ranges": [{"lo": 3306, "hi": 3306}]
+}
+]
+}

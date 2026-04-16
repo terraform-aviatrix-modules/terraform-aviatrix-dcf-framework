@@ -1,0 +1,10 @@
+rules:
+  - name: block-to-threat-intel
+    action: DENY
+    protocol: ANY
+    priority: 11
+    src_smart_groups:
+      - rfc1918
+    dst_smart_groups:
+      - threat-feeds
+    logging: true

@@ -1,0 +1,6 @@
+web_groups:
+  allowed-downloads:
+    selector:
+      - urlfilter: registry.npmjs.org/*
+      - urlfilter: pypi.org/packages/*
+      - urlfilter: dl.google.com/linux/*
