@@ -1,0 +1,17 @@
+{
+  "smart_groups": {
+    "threat-feeds": {
+      "selector": [
+        {"external": "threatiq"},
+        {
+          "external": "geo",
+          "ext_args": {"country_iso_code": "CN"}
+        },
+        {
+          "external": "geo",
+          "ext_args": {"country_iso_code": "RU"}
+        }
+      ]
+    }
+  }
+}

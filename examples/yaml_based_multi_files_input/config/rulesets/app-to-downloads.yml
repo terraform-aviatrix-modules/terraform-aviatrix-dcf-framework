@@ -1,0 +1,14 @@
+rules:
+  - name: app-to-downloads
+    action: DEEP_PACKET_INSPECTION_PERMIT
+    protocol: TCP
+    priority: 110
+    src_smart_groups:
+      - app-servers
+    dst_smart_groups:
+      - Public Internet
+    web_groups:
+      - allowed-downloads
+    port_ranges:
+      - lo: 443
+        hi: 443

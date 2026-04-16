@@ -1,0 +1,14 @@
+rules:
+  - name: k8s-frontend-to-app
+    action: PERMIT
+    protocol: TCP
+    priority: 300
+    src_smart_groups:
+      - k8s-frontend
+    dst_smart_groups:
+      - app-servers
+    port_ranges:
+      - lo: 8080
+        hi: 8080
+      - lo: 8443
+        hi: 8443

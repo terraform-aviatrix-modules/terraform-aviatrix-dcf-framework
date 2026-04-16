@@ -1,0 +1,10 @@
+{
+  "smart_groups": {
+    "everywhere": {
+      "selector": [
+        { "cidr": "0.0.0.0/0" }
+      ]
+    }
+  }
+}
+      

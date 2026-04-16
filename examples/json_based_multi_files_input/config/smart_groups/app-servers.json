@@ -1,0 +1,17 @@
+{
+  "smart_groups": {
+    "app-servers": {
+      "selector": [
+        {
+          "type": "vm",
+          "account_name": "my-aws-account",
+          "region": "us-east-1",
+          "tags": {
+            "role": "app",
+            "env": "prod"
+          }
+        }
+      ]
+    }
+  }
+}

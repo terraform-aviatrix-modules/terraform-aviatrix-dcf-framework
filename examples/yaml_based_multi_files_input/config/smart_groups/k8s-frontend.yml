@@ -1,0 +1,6 @@
+smart_groups:
+  k8s-frontend:
+    selector:
+      - type: k8s
+        k8s_cluster_id: cluster-abc123
+        k8s_namespace: frontend

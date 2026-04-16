@@ -1,0 +1,13 @@
+{"rules": [
+{
+    "name": "deny-all",
+    "action": "DENY",
+    "protocol": "ANY",
+    "priority": 65000,
+    "src_smart_groups": ["Public Internet"],
+    "dst_smart_groups": ["rfc1918"],
+    "logging": true,
+    "watch": false
+}
+]
+}
